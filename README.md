@@ -204,25 +204,7 @@ Tips:
 
 
 ### GET /stats — Reporting
-Endpoint: GET http://localhost:3000/stats?site_id=test-123&date=2025-11-14
 
-Example:
-```bash
- "http://localhost:3000/stats?site_id=test-123&date=2025-11-14"
-```
-
-Example response:
-```json
-{
-  "site_id": "test-123",
-  "date": "2025-11-14",
-  "total_views": 1,
-  "unique_users": 1,
-  "top_paths": [
-    { "path": "/home", "views": 1 }
-  ]
-}
-```
 
 
 ⭐ 4.2 Redis Queue Verification
@@ -246,13 +228,10 @@ Check worker logs:
 
 Expected examples:
 
----
 ``` Consumer group created
 BEGIN
 COMMIT
 XACK ```
-
----
 
 
 ⭐ 4.4 PostgreSQL Raw Events Storage
@@ -260,6 +239,7 @@ XACK ```
 ### Postgres checks
 
 List tables:
+
 ```bash
 docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"
 ```
@@ -271,10 +251,8 @@ docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM
 
 Query aggregated stats:
 ```bash
-docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM daily_site_stats WHERE site_id='test-123' AND date='2025-11-14';"
+docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM daily_site_stats ;"
 ```
-
-
 
 ⭐ 4.5 GET /stats (Reporting API)
 ================================
@@ -283,8 +261,32 @@ Example Request:
 
 Response:
 
+Endpoint: GET http://localhost:3000/stats?site_id=test-123&date=2025-11-14
+
+Example:
+```bash
+ "http://localhost:3000/stats?site_id=test-123&date=2025-11-14"
+```
+
+Example response:
+```json
+{
+  "site_id": "test-123",
+  "date": "2025-11-14",
+  "total_views": 1,
+  "unique_users": 1,
+  "top_paths": [
+    { "path": "/home", "views": 1 }
+  ]
+}
+```
+
+
 
  ## 📦 Project Structure
+
+ ---
+
 ```
 QueueFlow-Engine/
 │
@@ -305,11 +307,9 @@ QueueFlow-Engine/
 │   └── schema.sql
 │
 ├── docker-compose.yml
-└── README.md                # <- this file
+└── README.md                
 ```
-
 ---
-
 
 
 
