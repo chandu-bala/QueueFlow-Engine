@@ -139,10 +139,13 @@ This creates:
 -----------------------------------
 
 Run:
-`   docker compose exec postgres psql -U analytics -d analytics_db -f /app/migrations/schema.sql   `
+
+```   docker compose exec postgres psql -U analytics -d analytics_db -f /app/migrations/schema.sql   ```
+
 
 Verify Tables:
-`   docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"   `
+
+```   docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"   ```
 
 
 📬 4. API Usage
@@ -182,11 +185,11 @@ Plain
 
 After sending POST request:
 
-Plain `   docker compose exec redis redis-cli XLEN events_stream   `
+```   docker compose exec redis redis-cli XLEN events_stream   ```
 
 Expected:
 
-Plain `   (integer) 1   `
+ ```   (integer) 1   ```
 
 
 ⭐ 4.3 Worker Processing
@@ -194,22 +197,22 @@ Plain `   (integer) 1   `
 
 Check worker logs:
 
-Plain 
-`   docker compose logs worker --tail=50   `
+```   docker compose logs worker --tail=50   ```
 
 Expected examples:
 
-Plain 
+
 ``` Consumer group created
 BEGIN
 COMMIT
 XACK ```
 
 
+
 ⭐ 4.4 PostgreSQL Raw Events Storage
 ===================================
 
-`   docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM events;"   `
+```docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM events;"   ```
 
 
 
@@ -222,7 +225,8 @@ Response:
 
 
 📦 5. Project Structure
-=======================
+========================
+
 ```
 TRJA_Project/
 │
