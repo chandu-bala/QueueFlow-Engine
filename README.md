@@ -14,7 +14,9 @@ Designed exactly to meet the assignment requirement:
 
 ### ⚙️ System Workflow
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Client → Ingestion API → Redis Stream Queue → Worker Processor → PostgreSQL → Reporting API   `
+Plain 
+
+`  Client → Ingestion API → Redis Stream Queue → Worker Processor → PostgreSQL → Reporting API   `
 
 ### ✔ Components
 
@@ -68,19 +70,39 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 
 Stores raw incoming events.
 
-ColumnTypeDescriptionidBIGSERIAL PKAuto incrementsite\_idTEXTWebsite IDevent\_typeTEXTe.g., page\_viewpathTEXTURL pathuser\_idTEXTUser identifiertimestampTIMESTAMPTZWhen event happenedreceived\_atTIMESTAMPTZWhen saved to DB
+| Column      | Type         | Description         |
+| ----------- | ------------ | ------------------- |
+| id          | BIGSERIAL PK | Auto-increment      |
+| site_id     | TEXT         | Website ID          |
+| event_type  | TEXT         | e.g., page_view     |
+| path        | TEXT         | URL path            |
+| user_id     | TEXT         | User identifier     |
+| timestamp   | TIMESTAMPTZ  | When event occurred |
+| received_at | TIMESTAMPTZ  | When stored in DB   |
+
 
 ### **Table: daily\_site\_stats**
 
 Stores daily totals per site.
 
-ColumnTypesite\_idTEXTdateDATEtotal\_viewsBIGINTunique\_usersBIGINT
+| Column       | Type   |
+| ------------ | ------ |
+| site_id      | TEXT   |
+| date         | DATE   |
+| total_views  | BIGINT |
+| unique_users | BIGINT |
 
 ### **Table: daily\_site\_path\_counts**
 
 Stores daily top path hits.
 
-ColumnTypesite\_idTEXTdateDATEpathTEXTviewsBIGINT
+| Column  | Type   |
+| ------- | ------ |
+| site_id | TEXT   |
+| date    | DATE   |
+| path    | TEXT   |
+| views   | BIGINT |
+
 
 🐳 3. Setup Instructions (Using Docker Compose)
 ===============================================
@@ -95,95 +117,129 @@ ColumnTypesite\_idTEXTdateDATEpathTEXTviewsBIGINT
 **Step 1 — Clone the Repository**
 ---------------------------------
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   git clone   cd TRJA_Project   `
+``` git clone 
+cd QueueFlow-Engine
+```
 
 **Step 2 — Start All Services**
 -------------------------------
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker compose up --build   `
+`   docker compose up --build   `
 
 This creates:
 
-ServicePortAPI3000Redis6379Postgres5432Workerbackground
+| Service  | Port | Purpose                   |
+| -------- | ---- | ------------------------- |
+| API      | 3000 | Ingestion + Reporting API |
+| Redis    | 6379 | Event Queue               |
+| Postgres | 5432 | Database                  |
+| Worker   | —    | Background processor      |
 
-📸 **Insert Screenshot: Docker Desktop → All containers running**
 
 **Step 3 — Create Database Schema**
 -----------------------------------
 
 Run:
+`   docker compose exec postgres psql -U analytics -d analytics_db -f /app/migrations/schema.sql   `
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker compose exec postgres psql -U analytics -d analytics_db -f /app/migrations/schema.sql   `
+Verify Tables:
+`   docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"   `
 
-Verify:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"   `
-
-📸 **Insert Screenshot of tables: events, daily\_site\_stats, daily\_site\_path\_counts**
-
-📬 4. API Usage (With Required Screenshots)
+📬 4. API Usage
 ===========================================
 
 ⭐ 4.1 POST /event (Ingestion API)
 =================================
 
-### Example:
+### Example Request :
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   curl -X POST http://localhost:3000/event \  -H "Content-Type: application/json" \  -d '{    "site_id":"test-123",    "event_type":"page_view",    "path":"/home",    "user_id":"u1",    "timestamp":"2025-11-14T15:30:01Z"  }'   `
+Plain
+```
+curl -X POST http://localhost:3000/event \
+-H "Content-Type: application/json" \
+-d '{
+  "site_id":"test-123",
+  "event_type":"page_view",
+  "path":"/home",
+  "user_id":"u1",
+  "timestamp":"2025-11-14T15:30:01Z"
+}'
+```
 
 ### Expected Response:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   {    "status": "accepted",    "event_id": ""  }   `
+Plain 
+```
+{
+  "status": "accepted",
+  "event_id": ""
+}
+```
 
-📸 **Insert Screenshot: Postman POST /event success response**
 
 ⭐ 4.2 Redis Queue Verification
 ==============================
 
 After sending POST request:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker compose exec redis redis-cli XLEN events_stream   `
+Plain `   docker compose exec redis redis-cli XLEN events_stream   `
 
 Expected:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   (integer) 1   `
+Plain `   (integer) 1   `
 
-📸 **Insert Screenshot: Redis CLI showing XLEN events\_stream**
 
 ⭐ 4.3 Worker Processing
 =======================
 
 Check worker logs:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker compose logs worker --tail=50   `
+Plain 
+`   docker compose logs worker --tail=50   `
 
 Expected examples:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   Consumer group created  BEGIN  COMMIT  XACK   `
+Plain 
+``` Consumer group created
+BEGIN
+COMMIT
+XACK ```
 
-📸 **Insert Screenshot: Worker logs showing BEGIN → COMMIT → XACK**
 
 ⭐ 4.4 PostgreSQL Raw Events Storage
 ===================================
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM events;"   `
+`   docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM events;"   `
 
-📸 **Insert Screenshot: events table showing inserted event rows**
+
 
 ⭐ 4.5 GET /stats (Reporting API)
 ================================
 
 Example Request:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   curl "http://localhost:3000/stats?site_id=test-123&date=2025-11-14"   `
+Response:
 
-Example Response:
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   {    "site_id": "test-123",    "date": "2025-11-14",    "total_views": 1,    "unique_users": 1,    "top_paths": [      { "path": "/home", "views": 1 }    ]  }   `
-
-📸 **Insert Screenshot: Postman GET /stats response**
 
 📦 5. Project Structure
 =======================
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   TRJA_Project/  │  ├── api/  │   ├── src/server.js  │   ├── src/db.js  │   ├── Dockerfile  │   └── package.json  │  ├── worker/  │   ├── src/worker.js  │   ├── Dockerfile  │   └── package.json  │  ├── migrations/  │   └── schema.sql  │  ├── docker-compose.yml  └── README.md   `
+```
+TRJA_Project/
+│
+├── api/
+│   ├── src/server.js
+│   ├── src/db.js
+│   ├── Dockerfile
+│   └── package.json
+│
+├── worker/
+│   ├── src/worker.js
+│   ├── Dockerfile
+│   └── package.json
+│
+├── migrations/
+│   └── schema.sql
+│
+├── docker-compose.yml
+└── README.md
+```
