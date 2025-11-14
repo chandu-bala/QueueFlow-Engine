@@ -135,7 +135,8 @@ Stores daily top path hits.
 ---------------------------------
 
 ```bash
- git clone https://github.com/chandu-bala/QueueFlow-Engine.git
+git clone https://github.com/chandu-bala/QueueFlow-Engine.git
+
 cd QueueFlow-Engine
 ```
 
@@ -212,6 +213,8 @@ Tips:
 ⭐ 4.2 Redis Queue Verification
 ==============================
 
+Redis Streams was used because it’s an in-memory, high-speed queue that can handle a huge number of events with almost no delay. It supports consumer groups, ensures ordered processing, and is much lighter than Kafka, making it perfect for fast event pipelines.
+
 After sending POST request:
 
 ```bash
@@ -225,6 +228,8 @@ Expected:
 
 ⭐ 4.3 Worker Processing
 =======================
+The ingestion API never writes to the database directly. It only validates the event and pushes it to Redis Streams instantly, then returns success. All heavy work is done later by the background worker, keeping the API extremely fast and non-blocking.
+
 
 Check worker logs:
 
