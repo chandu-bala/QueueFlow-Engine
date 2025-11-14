@@ -1,0 +1,23 @@
+# Dependency directories for Node.js projects (API and Worker)
+**/node_modules
+/api/node_modules
+/worker/node_modules
+
+# Build/Logs
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# Docker specific files
+# Since you're using docker-compose, you might want to ignore the
+# automatically generated volume data if it's created outside of docker's management.
+# But for typical setups, you only ignore things like build context and secret files.
+# Temporarily ignoring the example below, only uncomment if needed:
+# docker-compose.override.yml
+# *.pem
+# *.key
+
+# VS Code specific files
+.vscode/
