@@ -153,6 +153,7 @@ This creates:
 | Postgres | 5432 | Database                  |
 | Worker   | —    | Background processor      |
 
+![STARTTING SERVICES VIA DOCKER](components/Services.png)
 
 **Step 3 — Create Database Schema**
 
@@ -196,6 +197,7 @@ Expected response:
   "event_id": "<uuid>"
 }
 ```
+![POST METHOD RESULT](components/POST_METHOD.png)
 
 Tips:
 - Ingestion returns quickly because it writes only to Redis, not to Postgres.
@@ -212,11 +214,13 @@ Tips:
 
 After sending POST request:
 
-```   docker compose exec redis redis-cli XLEN events_stream   ```
+```bash
+docker compose exec redis redis-cli XLEN events_stream
+```
 
 Expected:
 
- ```   (integer) 1   ```
+` (integer) 1` 
 
 
 ⭐ 4.3 Worker Processing
@@ -224,14 +228,16 @@ Expected:
 
 Check worker logs:
 
-```   docker compose logs worker --tail=50   ```
+```bash
+docker compose logs worker --tail=50
+```
 
 Expected examples:
 
-``` Consumer group created
+Consumer group created
 BEGIN
 COMMIT
-XACK ```
+XACK
 
 
 ⭐ 4.4 PostgreSQL Raw Events Storage
@@ -280,6 +286,8 @@ Example response:
   ]
 }
 ```
+
+![GET METHOD RESULT](components/GET_METHOD.png)
 
 
 
