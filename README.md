@@ -153,7 +153,7 @@ This creates:
 | Postgres | 5432 | Database                  |
 | Worker   | —    | Background processor      |
 
-![STARTTING SERVICES VIA DOCKER](components/Services.png)
+
 
 **Step 3 — Create Database Schema**
 
@@ -254,6 +254,7 @@ Query raw events:
 ```bash
 docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM events ORDER BY received_at DESC LIMIT 10;"
 ```
+![STARTTING SERVICES VIA DOCKER](components/Services.png)
 
 Query aggregated stats:
 ```bash
