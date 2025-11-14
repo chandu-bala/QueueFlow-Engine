@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS daily_site_stats (
   unique_users BIGINT DEFAULT 0,
   PRIMARY KEY (site_id, date)
 );
-
 CREATE TABLE IF NOT EXISTS daily_site_path_counts (
   site_id TEXT NOT NULL,
   date DATE NOT NULL,
@@ -23,3 +22,5 @@ CREATE TABLE IF NOT EXISTS daily_site_path_counts (
   views BIGINT DEFAULT 0,
   PRIMARY KEY (site_id, date, path)
 );
+
+
