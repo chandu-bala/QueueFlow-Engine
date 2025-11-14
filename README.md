@@ -1,48 +1,21 @@
 # 📘 QueueFlow Engine
-(Node.js · Redis Streams · PostgreSQL · Docker)
+**(Node.js + Redis Streams + PostgreSQL + Docker)**
+=============================================================
 
-[TOC]
-
----
-
-TL;DR
-- Fast, non-blocking ingestion endpoint (POST /event) that writes events into a Redis Stream.
-- Background worker consumes the stream and writes raw events + aggregated stats into PostgreSQL.
-- Reporting API (GET /stats) returns daily totals, unique users and top paths.
-- Designed to meet the requirement: "The ingestion endpoint must be extremely fast, must not wait for database write, and must use an asynchronous queue."
 
 ---
+This project implements a scalable, high-performance backend used to capture website analytics events.It supports **fast ingestion**, **asynchronous background processing**, and **real-time reporting** with aggregated analytics.
 
-## Table of contents
-- [Architecture Overview](#architecture-overview)
-- [Quick Start (Docker Compose)](#quick-start-docker-compose)
-- [APIs & Examples](#apis--examples)
-  - [POST /event — Ingestion](#post-event---ingestion)
-  - [GET /stats — Reporting](#get-stats---reporting)
-- [Verification & Debugging](#verification--debugging)
-  - [Redis stream checks](#redis-stream-checks)
-  - [Worker logs](#worker-logs)
-  - [Postgres checks](#postgres-checks)
-- [Database Schema](#database-schema)
-- [Project Structure](#project-structure)
-- [Development notes & env vars](#development-notes--env-vars)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [Screenshots & Evidence](#screenshots--evidence)
-- [License](#license)
+Designed exactly to meet the assignment requirement:
 
+> _“The ingestion endpoint must be extremely fast, must not wait for database write, and must use an asynchronous queue.”_
 ---
 
-## Architecture Overview
+🚀 1. Architecture Overview
+===========================
 
-Client → Ingestion API → Redis Stream Queue → Worker Processor → PostgreSQL → Reporting API
+### ⚙️ System Workflow
 
-Key components:
-1. **Ingestion API** — receives events, validates them, *pushes* into Redis Stream (events_stream) and immediately returns 202 Accepted.
-2. **Worker Processor** — consumes events from Redis Consumer Groups, inserts raw events into `events` table and updates aggregated tables (`daily_site_stats`, `daily_site_path_counts`). Acknowledges messages (XACK) after successful processing.
-3. **Reporting API** — reads aggregated tables to return daily totals, unique users and top paths.
-
-Visual (ASCII)
 ```
 ┌─────────┐     ┌─────────────┐     ┌────────────┐     ┌───────────┐
 │ Browser │ --> │ Ingestion   │ --> │ Redis      │ --> │ Worker    │
@@ -61,26 +34,127 @@ Visual (ASCII)
                                                     └─────────┘
 ```
 
----
 
-## Quick Start (Docker Compose)
+### ✔ Components
 
-Prerequisites:
-- Docker Desktop (or Docker Engine + Compose)
-- Git
+#### **1️⃣ Ingestion API — POST /event**
 
-Clone and start:
+*   Receives analytics events
+    
+*   Validates input JSON
+    
+*   Pushes event to Redis Stream (events\_stream)
+    
+*   Returns **202 Accepted immediately** (non-blocking)
+    
+*   Ensures high TPS (thousands/sec)
+    
+
+#### **2️⃣ Processor (Worker Service)**
+
+*   Pulls events using Redis Consumer Groups
+    
+*   Inserts raw events into PostgreSQL
+    
+*   Updates aggregated tables:
+    
+    *   daily\_site\_stats
+        
+    *   daily\_site\_path\_counts
+        
+*   Acknowledges messages (XACK) after successful processing
+    
+*   Runs continually in background
+    
+
+#### **3️⃣ Reporting API — GET /stats**
+
+*   Fetches analytics summaries
+    
+*   Returns:
+    
+    *   total views
+        
+    *   unique users
+        
+    *   top most visited paths
+        
+
+🗄️ 2. Database Schema
+======================
+
+### **Table: events**
+
+Stores raw incoming events.
+
+| Column      | Type         | Description         |
+| ----------- | ------------ | ------------------- |
+| id          | BIGSERIAL PK | Auto-increment      |
+| site_id     | TEXT         | Website ID          |
+| event_type  | TEXT         | e.g., page_view     |
+| path        | TEXT         | URL path            |
+| user_id     | TEXT         | User identifier     |
+| timestamp   | TIMESTAMPTZ  | When event occurred |
+| received_at | TIMESTAMPTZ  | When stored in DB   |
+
+
+### **Table: daily\_site\_stats**
+
+Stores daily totals per site.
+
+| Column       | Type   |
+| ------------ | ------ |
+| site_id      | TEXT   |
+| date         | DATE   |
+| total_views  | BIGINT |
+| unique_users | BIGINT |
+
+### **Table: daily\_site\_path\_counts**
+
+Stores daily top path hits.
+
+| Column  | Type   |
+| ------- | ------ |
+| site_id | TEXT   |
+| date    | DATE   |
+| path    | TEXT   |
+| views   | BIGINT |
+
+
+🐳 3. Setup Instructions (Using Docker Compose)
+===============================================
+
+### **Prerequisites**
+
+*   Docker Desktop
+    
+*   Git
+    
+
+**Step 1 — Clone the Repository**
+---------------------------------
+
 ```bash
-git clone https://github.com/<your-username>/QueueFlow-Engine.git
+ git clone https://github.com/chandu-bala/QueueFlow-Engine.git
 cd QueueFlow-Engine
-docker compose up --build -d
 ```
 
-Services started (typical):
-- api (HTTP server) — port 3000
-- redis — port 6379
-- postgres — port 5432
-- worker — background consumer
+**Step 2 — Start All Services**
+-------------------------------
+
+```bash   docker compose up --build   ```
+
+This creates:
+
+| Service  | Port | Purpose                   |
+| -------- | ---- | ------------------------- |
+| API      | 3000 | Ingestion + Reporting API |
+| Redis    | 6379 | Event Queue               |
+| Postgres | 5432 | Database                  |
+| Worker   | —    | Background processor      |
+
+
+**Step 3 — Create Database Schema**
 
 Create DB schema:
 ```bash
@@ -92,21 +166,21 @@ Verify tables:
 docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"
 ```
 
-Note: replace repository URL and branch names if your layout differs.
 
----
+📬 4. API Usage
+===========================================
 
-## APIs & Examples
+⭐ 4.1 POST /event (Ingestion API)
+=================================
 
-### POST /event — Ingestion
+### Example Request :
+
 Endpoint: POST http://localhost:3000/event  
 Behavior: Validate payload → XADD to Redis stream `events_stream` → return 202 immediately.
 
 Example cURL:
-```bash
-curl -X POST http://localhost:3000/event \
-  -H "Content-Type: application/json" \
-  -d '{
+```json
+ '{
     "site_id":"test-123",
     "event_type":"page_view",
     "path":"/home",
@@ -127,12 +201,14 @@ Tips:
 - Ingestion returns quickly because it writes only to Redis, not to Postgres.
 - Validate required fields: `site_id`, `event_type`, `path`, `user_id`, `timestamp`.
 
+
+
 ### GET /stats — Reporting
-Endpoint: GET http://localhost:3000/stats?site_id=<SITE>&date=YYYY-MM-DD
+Endpoint: GET http://localhost:3000/stats?site_id=test-123&date=2025-11-14
 
 Example:
 ```bash
-curl "http://localhost:3000/stats?site_id=test-123&date=2025-11-14"
+ "http://localhost:3000/stats?site_id=test-123&date=2025-11-14"
 ```
 
 Example response:
@@ -148,39 +224,41 @@ Example response:
 }
 ```
 
+
+⭐ 4.2 Redis Queue Verification
+==============================
+
+After sending POST request:
+
+```   docker compose exec redis redis-cli XLEN events_stream   ```
+
+Expected:
+
+ ```   (integer) 1   ```
+
+
+⭐ 4.3 Worker Processing
+=======================
+
+Check worker logs:
+
+```   docker compose logs worker --tail=50   ```
+
+Expected examples:
+
+---
+``` Consumer group created
+BEGIN
+COMMIT
+XACK ```
+
 ---
 
-## Verification & Debugging
 
-### Redis stream checks
-Check stream length after sending events:
-```bash
-docker compose exec redis redis-cli XLEN events_stream
-# expected: (integer) N
-```
-
-List stream entries (sample):
-```bash
-docker compose exec redis redis-cli XREVRANGE events_stream + - COUNT 20
-```
-
-Check consumer group info:
-```bash
-docker compose exec redis redis-cli XINFO GROUPS events_stream
-docker compose exec redis redis-cli XINFO CONSUMERS events_stream <group-name>
-```
-
-### Worker logs
-Inspect worker container logs:
-```bash
-docker compose logs worker --tail=100
-```
-Look for outputs such as:
-- "Consumer group created"
-- BEGIN / COMMIT (if using transactions)
-- XACK (acknowledgement)
-
+⭐ 4.4 PostgreSQL Raw Events Storage
+===================================
 ### Postgres checks
+
 List tables:
 ```bash
 docker compose exec postgres psql -U analytics -d analytics_db -c "\dt"
@@ -196,40 +274,17 @@ Query aggregated stats:
 docker compose exec postgres psql -U analytics -d analytics_db -c "SELECT * FROM daily_site_stats WHERE site_id='test-123' AND date='2025-11-14';"
 ```
 
----
 
-## Database Schema
 
-migrations/schema.sql (summary)
+⭐ 4.5 GET /stats (Reporting API)
+================================
 
-- Table: events
-  - id BIGSERIAL PRIMARY KEY
-  - site_id TEXT
-  - event_type TEXT
-  - path TEXT
-  - user_id TEXT
-  - timestamp TIMESTAMPTZ
-  - received_at TIMESTAMPTZ DEFAULT now()
+Example Request:
 
-- Table: daily_site_stats
-  - site_id TEXT
-  - date DATE
-  - total_views BIGINT
-  - unique_users BIGINT
-  - PRIMARY KEY (site_id, date)
+Response:
 
-- Table: daily_site_path_counts
-  - site_id TEXT
-  - date DATE
-  - path TEXT
-  - views BIGINT
-  - PRIMARY KEY (site_id, date, path)
 
-(See `migrations/schema.sql` for exact CREATE TABLE statements.)
-
----
-
-## Project Structure
+ ## 📦 Project Structure
 ```
 QueueFlow-Engine/
 │
@@ -255,34 +310,7 @@ QueueFlow-Engine/
 
 ---
 
-## Development notes & env vars
-
-Common environment variables (example):
-- POSTGRES_USER=analytics
-- POSTGRES_DB=analytics_db
-- POSTGRES_PASSWORD=analytics
-- REDIS_URL=redis://redis:6379
-- PG_HOST=postgres
-- PG_PORT=5432
-- API_PORT=3000
-- REDIS_STREAM=events_stream
-- REDIS_GROUP=analytics_workers
-- REDIS_CONSUMER=worker-1
-
-Set these in `docker-compose.yml` and `.env` as appropriate.
-
----
 
 
 
-## License
-MIT — see LICENSE file.
 
----
-
-If you want, I can:
-- create the README.md directly in your repository (I can prepare a git change/pull request or push to a branch if you grant access),
-- add a docs/ directory with placeholder images,
-- or generate the filled-in schema.sql sample and example Postman collection.
-
-Tell me which of the above you want next and I will prepare it.
