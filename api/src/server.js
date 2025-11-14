@@ -73,7 +73,6 @@ const pathRes = await db.query(
 [site_id, date]
 );
 
-
 const total_views = aggRes.rows[0] ? Number(aggRes.rows[0].total_views) : 0;
 const unique_users = aggRes.rows[0] ? Number(aggRes.rows[0].unique_users) : 0;
 
@@ -90,7 +89,5 @@ console.error('stats error', e);
 res.status(500).json({ error: 'internal_error' });
 }
 });
-
-
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`API listening on ${port}`));
